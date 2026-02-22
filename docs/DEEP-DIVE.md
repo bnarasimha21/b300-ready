@@ -1157,11 +1157,11 @@ export NCCL_DEBUG_FILE=/tmp/nccl_debug.%h.%p.log
 
 ---
 
-## NVNVFP4: B300's Key Differentiator
+## NVFP4: B300's Key Differentiator
 
 ### Why NVFP4 Matters
 
-B300 (Blackwell) introduces **NVNVFP4** - a 4-bit floating point format that delivers 2x throughput vs FP8:
+B300 (Blackwell) introduces **NVFP4** - a 4-bit floating point format that delivers 2x throughput vs FP8:
 
 | Precision | B300 Performance (per GPU) | Use Case |
 |-----------|---------------------------|----------|
@@ -1202,7 +1202,7 @@ trtllm-build \
     --max_output_len 2048
 
 # Step 3: Run inference
-python scripts/nvnvfp4_inference.py --mode benchmark
+python scripts/nvfp4_inference.py --mode benchmark
 ```
 
 ### NVFP4 vs FP8 Quality Comparison
