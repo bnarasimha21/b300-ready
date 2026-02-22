@@ -1226,3 +1226,35 @@ Inference Capacity (Llama-70B, NVFP4):
 - Daily capacity: ~690M tokens
 ```
 
+
+### Official TensorRT-LLM NVFP4 Commands
+
+```bash
+# Install TensorRT-LLM
+pip install tensorrt_llm --extra-index-url https://pypi.nvidia.com
+
+# Quantize to NVFP4 (official syntax)
+python quantize.py \
+    --model_dir meta-llama/Llama-2-70b-hf \
+    --qformat nvfp4 \
+    --tp_size 8 \
+    --output_dir ./llama-70b-nvfp4 \
+    --calib_size 512
+
+# Build engine
+trtllm-build \
+    --checkpoint_dir ./llama-70b-nvfp4 \
+    --output_dir ./llama-70b-engine \
+    --gemm_plugin auto \
+    --max_batch_size 64 \
+    --max_input_len 4096 \
+    --max_seq_len 8192
+
+# Run inference
+python run.py \
+    --engine_dir ./llama-70b-engine \
+    --tokenizer_dir meta-llama/Llama-2-70b-hf \
+    --max_output_len 100
+```
+
+Reference: https://github.com/NVIDIA/TensorRT-LLM/tree/main/examples/quantization
