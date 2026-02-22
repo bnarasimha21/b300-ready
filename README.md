@@ -2,13 +2,13 @@
 
 Everything you need to train and serve LLMs on Dell PowerEdge XE9780 + 8x NVIDIA B300.
 
-## B300 Key Feature: NVFP4
+## B300 Key Feature: NVNVFP4
 
-B300 (Blackwell) introduces **FP4** precision - 2x throughput vs FP8:
+B300 (Blackwell) introduces **NVFP4** precision - 2x throughput vs FP8:
 
 | Precision | Performance (8x B300) | Best For |
 |-----------|----------------------|----------|
-| **FP4** | 36 PFLOPS | Inference |
+| **NVFP4** | 36 PFLOPS | Inference |
 | FP8 | 18 PFLOPS | Training + Inference |
 | BF16 | 9 PFLOPS | Training |
 
@@ -29,8 +29,8 @@ python scripts/nvlink_bandwidth_test.py
 python scripts/prepare_data.py --tokens 10
 ./launch_8gpu.sh
 
-# 4b. INFERENCE (uses FP4)
-python scripts/fp4_inference.py --mode compare
+# 4b. INFERENCE (uses NVFP4)
+python scripts/nvnvfp4_inference.py --mode compare
 ```
 
 ## Repository Structure
@@ -45,7 +45,7 @@ b300-ready/
 │   ├── prepare_data.py           # Data preparation
 │   ├── train_7b.py               # 7B training (FP8/BF16)
 │   ├── train_multinode.py        # 70B multi-node training
-│   └── fp4_inference.py          # FP4 inference (NEW)
+│   └── nvnvfp4_inference.py          # NVFP4 inference (NEW)
 ├── configs/
 │   └── 7b_config.yaml
 ├── setup.sh
@@ -59,7 +59,7 @@ b300-ready/
 | Task | Script | Precision | Why |
 |------|--------|-----------|-----|
 | Training | `train_7b.py` | FP8/BF16 | Gradient stability |
-| Inference | `fp4_inference.py` | FP4 | 2x throughput |
+| Inference | `nvnvfp4_inference.py` | NVFP4 | 2x throughput |
 
 ## Hardware Configuration
 
@@ -76,7 +76,7 @@ b300-ready/
 |----------|-----------|------------|
 | 7B Training | FP8 | ~45K tokens/sec |
 | 70B Training | FP8 | ~12K tokens/sec |
-| 70B Inference | FP4 | ~8K tokens/sec (batched) |
+| 70B Inference | NVFP4 | ~8K tokens/sec (batched) |
 
 ## Documentation
 
@@ -84,7 +84,7 @@ b300-ready/
 
 - System architecture
 - NVLink/RoCEv2 networking
-- FP4 inference pipeline
+- NVFP4 inference pipeline
 - Advanced training examples
 - Monitoring & profiling
 

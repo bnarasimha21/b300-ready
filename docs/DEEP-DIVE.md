@@ -1157,15 +1157,15 @@ export NCCL_DEBUG_FILE=/tmp/nccl_debug.%h.%p.log
 
 ---
 
-## NVFP4: B300's Key Differentiator
+## NVNVFP4: B300's Key Differentiator
 
-### Why FP4 Matters
+### Why NVFP4 Matters
 
-B300 (Blackwell) introduces **NVFP4** - a 4-bit floating point format that delivers 2x throughput vs FP8:
+B300 (Blackwell) introduces **NVNVFP4** - a 4-bit floating point format that delivers 2x throughput vs FP8:
 
 | Precision | B300 Performance (per GPU) | Use Case |
 |-----------|---------------------------|----------|
-| **FP4** | 4.5 PFLOPS | Inference |
+| **NVFP4** | 4.5 PFLOPS | Inference |
 | FP8 | 2.25 PFLOPS | Training + Inference |
 | FP16/BF16 | 1.125 PFLOPS | Training |
 | FP32 | 562 TFLOPS | Debug/Reference |
@@ -1174,27 +1174,27 @@ B300 (Blackwell) introduces **NVFP4** - a 4-bit floating point format that deliv
 
 | Task | Recommended Precision | Why |
 |------|----------------------|-----|
-| **Inference serving** | FP4 | 2x throughput, minimal quality loss |
-| **Batch inference** | FP4 | Maximum tokens/sec |
+| **Inference serving** | NVFP4 | 2x throughput, minimal quality loss |
+| **Batch inference** | NVFP4 | Maximum tokens/sec |
 | **Fine-tuning** | FP8 or BF16 | Gradient stability |
 | **Pre-training** | BF16 (FP8 for some ops) | Training convergence |
 | **Research/Debug** | FP32 | Numerical accuracy |
 
-### FP4 Inference Pipeline
+### NVFP4 Inference Pipeline
 
 ```bash
-# Step 1: Quantize model to FP4 (one-time)
+# Step 1: Quantize model to NVFP4 (one-time)
 python -m tensorrt_llm.commands.convert_checkpoint \
     --model_dir meta-llama/Llama-2-70b-hf \
-    --output_dir ./llama-70b-fp4 \
+    --output_dir ./llama-70b-nvfp4 \
     --dtype float16 \
-    --use_fp4_weights \
-    --fp4_quantization_method awq \
+    --use_nvfp4_weights \
+    --nvfp4_quantization_method awq \
     --calib_dataset cnn_dailymail
 
 # Step 2: Build TensorRT engine
 trtllm-build \
-    --checkpoint_dir ./llama-70b-fp4 \
+    --checkpoint_dir ./llama-70b-nvfp4 \
     --output_dir ./llama-70b-engine \
     --tp_size 8 \
     --max_batch_size 64 \
@@ -1202,25 +1202,25 @@ trtllm-build \
     --max_output_len 2048
 
 # Step 3: Run inference
-python scripts/fp4_inference.py --mode benchmark
+python scripts/nvnvfp4_inference.py --mode benchmark
 ```
 
-### FP4 vs FP8 Quality Comparison
+### NVFP4 vs FP8 Quality Comparison
 
-| Model | FP16 (baseline) | FP8 | FP4 |
+| Model | FP16 (baseline) | FP8 | NVFP4 |
 |-------|-----------------|-----|-----|
 | Llama-2-7B (MMLU) | 45.3% | 45.1% | 44.8% |
 | Llama-2-70B (MMLU) | 68.9% | 68.7% | 68.2% |
 | Mistral-7B (HellaSwag) | 81.0% | 80.8% | 80.3% |
 
-*FP4 with AWQ calibration retains 99%+ of FP16 quality*
+*NVFP4 with AWQ calibration retains 99%+ of FP16 quality*
 
-### 8x B300 FP4 Aggregate
+### 8x B300 NVFP4 Aggregate
 
 ```
-Total FP4 Compute: 8 × 4.5 PFLOPS = 36 PFLOPS
+Total NVFP4 Compute: 8 × 4.5 PFLOPS = 36 PFLOPS
 
-Inference Capacity (Llama-70B, FP4):
+Inference Capacity (Llama-70B, NVFP4):
 - Single stream: ~200 tokens/sec
 - Batched (64): ~8,000 tokens/sec
 - Daily capacity: ~690M tokens
