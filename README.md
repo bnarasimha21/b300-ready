@@ -1,14 +1,16 @@
-# NVIDIA B300 + Dell XE9780: Complete Training Setup
+# NVIDIA B300 + Dell XE9780: Complete Training & Inference Setup
 
-Everything you need to train LLMs on Dell PowerEdge XE9780 + 8x NVIDIA B300.
+Everything you need to train and serve LLMs on Dell PowerEdge XE9780 + 8x NVIDIA B300.
 
-## What's Included
+## B300 Key Feature: NVFP4
 
-| Content | Location |
-|---------|----------|
-| **Deep Dive Documentation** | [docs/DEEP-DIVE.md](docs/DEEP-DIVE.md) |
-| **Ready-to-Run Code** | [scripts/](scripts/) |
-| **Launch Scripts** | `launch_8gpu.sh`, `launch_16gpu.sh` |
+B300 (Blackwell) introduces **FP4** precision - 2x throughput vs FP8:
+
+| Precision | Performance (8x B300) | Best For |
+|-----------|----------------------|----------|
+| **FP4** | 36 PFLOPS | Inference |
+| FP8 | 18 PFLOPS | Training + Inference |
+| BF16 | 9 PFLOPS | Training |
 
 ## Quick Start
 
@@ -17,21 +19,18 @@ Everything you need to train LLMs on Dell PowerEdge XE9780 + 8x NVIDIA B300.
 git clone https://github.com/bnarasimha21/b300-ready.git
 cd b300-ready
 
-# 2. Setup environment
-./setup.sh
-conda activate b300
+# 2. Setup
+./setup.sh && conda activate b300
 
 # 3. Verify hardware
 python scripts/nvlink_bandwidth_test.py
-python scripts/allreduce_benchmark.py
 
-# 4. Prepare data (10B tokens)
+# 4a. TRAINING (uses FP8/BF16)
 python scripts/prepare_data.py --tokens 10
+./launch_8gpu.sh
 
-# 5. Train
-./launch_8gpu.sh   # 7B model on 8 GPUs
-# OR
-./launch_16gpu.sh  # 70B model on 16 GPUs (2 nodes)
+# 4b. INFERENCE (uses FP4)
+python scripts/fp4_inference.py --mode compare
 ```
 
 ## Repository Structure
@@ -39,54 +38,55 @@ python scripts/prepare_data.py --tokens 10
 ```
 b300-ready/
 ├── docs/
-│   └── DEEP-DIVE.md            # Full technical documentation
+│   └── DEEP-DIVE.md              # Full technical documentation
 ├── scripts/
-│   ├── nvlink_bandwidth_test.py # Verify NVLink (ready to run)
-│   ├── allreduce_benchmark.py   # Test 8-GPU collectives (ready to run)
-│   ├── prepare_data.py          # Data prep (ready to run)
-│   ├── train_7b.py              # 7B training (ready to run)
-│   └── train_multinode.py       # 70B multi-node (ready to run)
+│   ├── nvlink_bandwidth_test.py  # Verify NVLink
+│   ├── allreduce_benchmark.py    # Test collectives
+│   ├── prepare_data.py           # Data preparation
+│   ├── train_7b.py               # 7B training (FP8/BF16)
+│   ├── train_multinode.py        # 70B multi-node training
+│   └── fp4_inference.py          # FP4 inference (NEW)
 ├── configs/
-│   └── 7b_config.yaml           # Training configuration
-├── setup.sh                     # One-command setup
-├── launch_8gpu.sh               # Single-node launch
-├── launch_16gpu.sh              # Multi-node launch
-└── requirements.txt             # Dependencies
+│   └── 7b_config.yaml
+├── setup.sh
+├── launch_8gpu.sh
+├── launch_16gpu.sh
+└── requirements.txt
 ```
+
+## When to Use Which Precision
+
+| Task | Script | Precision | Why |
+|------|--------|-----------|-----|
+| Training | `train_7b.py` | FP8/BF16 | Gradient stability |
+| Inference | `fp4_inference.py` | FP4 | 2x throughput |
 
 ## Hardware Configuration
 
 | Component | Specification |
 |-----------|---------------|
 | Server | Dell PowerEdge XE9780 |
-| GPUs | 8x NVIDIA B300 (192GB HBM3e each) |
-| CPU | Intel Xeon (Granite Rapids) |
+| GPUs | 8x NVIDIA B300 (192GB HBM3e) |
 | Intra-node | NVLink 5.0 (1.8 TB/s) |
 | Inter-node | 800 Gbps RoCEv2 |
 
-## What You Can Train
+## Performance
 
-| Model | GPUs | Tokens/sec | Time for 1T tokens |
-|-------|------|------------|-------------------|
-| 7B | 8 | ~45,000 | ~257 days |
-| 70B | 8 | ~12,000 | ~965 days |
-| 70B | 16 (2 nodes) | ~22,000 | ~526 days |
+| Workload | Precision | Throughput |
+|----------|-----------|------------|
+| 7B Training | FP8 | ~45K tokens/sec |
+| 70B Training | FP8 | ~12K tokens/sec |
+| 70B Inference | FP4 | ~8K tokens/sec (batched) |
 
 ## Documentation
 
-Full technical deep dive with architecture diagrams, code examples, and benchmarks:
+**[Full Deep Dive →](docs/DEEP-DIVE.md)**
 
-**[Read the Deep Dive →](docs/DEEP-DIVE.md)**
-
-Covers:
-- System architecture & NVLink topology
-- RoCEv2 inter-node networking
-- Software stack setup
-- 5 practical examples
-- Advanced Use Case 1: Pre-training 7B from scratch
-- Advanced Use Case 2: Multi-node 70B training
+- System architecture
+- NVLink/RoCEv2 networking
+- FP4 inference pipeline
+- Advanced training examples
 - Monitoring & profiling
-- Power & cost analysis
 
 ## License
 
